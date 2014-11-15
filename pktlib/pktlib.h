@@ -5,6 +5,7 @@
 
 enum header_type {
 	HDR_ETH,
+	HDR_ARP,
 	HDR_NONE,
 };
 
@@ -13,11 +14,26 @@ struct header {
 	uint8_t header_info[0];
 };
 
+/* user level headers */
 struct header_eth
 {
 	uint8_t source[14];
 	uint8_t dest[14];
 	uint16_t proto;
+};
+
+struct header_arp
+{
+	uint16_t hw_type;
+	uint16_t proto_type;
+	uint8_t hw_addr_len;
+	uint8_t proto_addr_len;
+	uint16_t opcode;
+	uint8_t *hw_addr_sender;
+	uint8_t *proto_addr_sender;
+	uint8_t *hw_addr_target;
+	uint8_t *proto_addr_target;
+	uint8_t data[0];
 };
 
 struct packet {
@@ -40,7 +56,28 @@ static inline size_t pktlib_pkt_hdr_size(enum header_type type)
 	case HDR_ETH:
 		size += sizeof(struct header_eth);
 		break;
+	case HDR_ARP:
+		size += sizeof(struct header_arp);
+		break;
 	case HDR_NONE:
+		break;
+	}
+
+	return size;
+}
+
+static inline size_t pktlib_pkt_hdr_ext_size(struct header *hdr)
+{
+	size_t size = 0;
+
+	switch (hdr->type) {
+	case HDR_ARP: {
+		struct header_arp *arp_info = (struct header_arp *)(hdr + 1);
+		size += 2 * (arp_info->hw_addr_len + arp_info->proto_addr_len);
+		break;
+	}
+
+	default:
 		break;
 	}
 
@@ -57,8 +94,8 @@ static inline struct header *pktlib_pkt_next_hdr(struct packet *pkt, struct head
 	if (!hdr)
 		return &pkt->hdr[0];
 
-	return (struct header *)((uint8_t *)hdr +
-				 pktlib_pkt_hdr_size(hdr->type));
+	return (struct header *)((uint8_t *)hdr + pktlib_pkt_hdr_size(hdr->type) +
+				 pktlib_pkt_hdr_ext_size(hdr));
 }
 
 #define pktlib_pkt_for_each(hdr, pkt) \
