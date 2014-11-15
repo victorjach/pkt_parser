@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -23,6 +25,8 @@ int pktcap_process(int sockfd)
 	} else {
 		printf("Frame [len = %zi]\n", len);
 	}
+
+	return 0;
 }
 
 int pktcap_start(const char *ifname)
