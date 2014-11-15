@@ -12,6 +12,18 @@
 #include <net/ethernet.h>
 #include "pktlib.h"
 
+void print_eth_packet(struct header_eth *ethh)
+{
+	printf("\t[Ethernet II]\n");
+	printf("\t\tSource address:%.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n",
+	       ethh->source[0], ethh->source[1], ethh->source[2],
+	       ethh->source[3], ethh->source[4], ethh->source[5]);
+	printf("\t\tDestination address:%.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n",
+	       ethh->dest[0], ethh->dest[1], ethh->dest[2],
+	       ethh->dest[3], ethh->dest[4], ethh->dest[5]);
+	printf("\t\tProtocol: 0x%X\n", ethh->proto);
+}
+
 void print_packet(struct packet *pkt)
 {
 	printf("[Frame, len=%zu]\n", pkt->len);
@@ -21,6 +33,7 @@ void print_packet(struct packet *pkt)
 	pktlib_pkt_for_each(hdr, pkt) {
 		switch (hdr->type) {
 		case HDR_ETH:
+			print_eth_packet((struct header_eth *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
