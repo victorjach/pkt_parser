@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -g
+CFLAGS= -g -std=c99 -Wall -Werror -D_GNU_SOURCE
 TARGET=pktcap
 OBJS=pktcap.o
 
