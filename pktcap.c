@@ -10,22 +10,44 @@
 #include <net/if.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
+#include "pktlib.h"
 
-int pktcap_process(int sockfd)
+void print_packet(struct packet *pkt)
+{
+	printf("[Frame, len=%zu]\n", pkt->len);
+
+	struct header *hdr;
+
+	pktlib_pkt_for_each(hdr, pkt) {
+		switch (hdr->type) {
+		case HDR_ETH:
+			break;
+		default:
+			printf("\t[Unknown header]\n");
+		}
+	}
+}
+
+int pktcap_process(struct packet_parser *parser, int sockfd)
 {
 	ssize_t len;
-	uint8_t pkt[65536];
+	uint8_t data[65536];
 
-	len = read(sockfd, pkt, sizeof(pkt));
+	len = read(sockfd, data, sizeof(data));
 	if (len < 0) {
 		perror("read():");
 	} else if (len == 0) {
 		printf("[DONE]\n");
 		exit(0);
-	} else {
-		printf("Frame [len = %zi]\n", len);
 	}
 
+	struct packet *pkt = pktlib_process(parser, data, (size_t)len);
+	if (!pkt) {
+		printf("error: allocation failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+	print_packet(pkt);
 	return 0;
 }
 
@@ -58,8 +80,15 @@ int pktcap_start(const char *ifname)
 	mr.mr_type = PACKET_MR_PROMISC;
 	setsockopt(sockfd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof (mr));
 
+	void *alloc(size_t size, void *cookie)
+	{
+		return malloc(size);
+	}
+
+	struct packet_parser parser;
+	pktlib_init(&parser, alloc, NULL);
 	while (1) {
-		pktcap_process(sockfd);
+		pktcap_process(&parser, sockfd);
 	}
 }
 
