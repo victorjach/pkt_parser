@@ -1,11 +1,12 @@
 CC = gcc
 CFLAGS = -g -std=c99 -Wall -Werror 
 TARGET = libpkt.a
-SRCS = pktlib.c
+SRCS = pktlib.c protocol.c
+
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: all
-all: $(OBJS) $(DEPS) $(LIB)
+all: $(OBJS)
 	$(AR) rcs $(TARGET) $(OBJS)
 
 %.o: %.c

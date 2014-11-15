@@ -1,4 +1,5 @@
 #include "pktlib.h"
+#include "protocol.h"
 
 int pktlib_init(struct packet_parser *parser, allocator_func allocator, void *cookie)
 {
@@ -12,6 +13,12 @@ int pktlib_init(struct packet_parser *parser, allocator_func allocator, void *co
 
 struct packet *pktlib_process(struct packet_parser *parser, const uint8_t *data, size_t len)
 {
-	return NULL;
+	struct packet *pkt = proto_eth_parse(parser, data, len, 0);
+	if (!pkt)
+		goto out;
+
+	pkt->len = len;
+out:
+	return pkt;
 }
 
