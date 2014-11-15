@@ -1,0 +1,21 @@
+CC = gcc
+CFLAGS = -g -std=c99 -Wall -Werror 
+TARGET = libpkt.a
+SRCS = pktlib.c
+OBJS = $(SRCS:.c=.o)
+
+.PHONY: all
+all: $(OBJS) $(DEPS) $(LIB)
+	$(AR) rcs $(TARGET) $(OBJS)
+
+%.o: %.c
+	$(CC) -MM $(CFLAGS) -c $< > $*.d
+	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(OBJS:.o=.d)
+	
+.PHONY: clean
+clean:
+	rm -f *.o *.d $(TARGET)
+
+
