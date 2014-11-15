@@ -24,6 +24,42 @@ void print_eth_packet(struct header_eth *ethh)
 	printf("\t\tProtocol: 0x%X\n", ethh->proto);
 }
 
+void print_arp_packet(struct header_arp *arph)
+{
+	printf("\t[ARP]\n");
+	printf("\t\tHardware type: ");
+	if (arph->hw_type == 0x0001)
+		printf("Ethernet(0x%X)\n", arph->hw_type);
+	else
+		printf("Unknown(0x%X)\n", arph->hw_type);
+
+	printf("\t\tProtocol type: ");
+	if (arph->proto_type == 0x0800)
+		printf("IPv4(0x%X)\n", arph->proto_type);
+	else
+		printf("Unknown(0x%x)\n", arph->proto_type);
+
+
+	printf("\t\tHW address len: %u\n", arph->hw_addr_len);
+	printf("\t\tProto address len: %u\n", arph->proto_addr_len);
+
+	printf("\t\tOpcode: ");
+	switch (arph->opcode) {
+	case 0x0001:
+		printf("request");
+		break;
+	case 0x0002:
+		printf("response");
+		break;
+	default:
+		printf("unknown");
+		break;
+	}
+
+	printf(" (0x%X)\n", arph->opcode);
+	/* TODO: print addresses */
+}
+
 void print_packet(struct packet *pkt)
 {
 	printf("[Frame, len=%zu]\n", pkt->len);
@@ -34,6 +70,9 @@ void print_packet(struct packet *pkt)
 		switch (hdr->type) {
 		case HDR_ETH:
 			print_eth_packet((struct header_eth *)hdr->header_info);
+			break;
+		case HDR_ARP:
+			print_arp_packet((struct header_arp *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
