@@ -18,15 +18,13 @@ struct header {
 };
 
 /* user level headers */
-struct header_eth
-{
+struct header_eth {
 	uint8_t source[6];
 	uint8_t dest[6];
 	uint16_t proto;
 };
 
-struct header_arp
-{
+struct header_arp {
 	uint16_t hw_type;
 	uint16_t proto_type;
 	uint8_t hw_addr_len;
@@ -39,8 +37,7 @@ struct header_arp
 	uint8_t data[0];
 };
 
-struct header_ip
-{
+struct header_ip {
 	uint8_t version;
 	uint8_t header_len;
 	uint8_t dscp;
@@ -58,8 +55,7 @@ struct header_ip
 	uint8_t options[0];
 };
 
-struct header_icmp
-{
+struct header_icmp {
 	uint8_t type;
 	uint8_t code;
 	uint16_t checksum;
