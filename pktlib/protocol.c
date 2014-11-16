@@ -31,20 +31,23 @@ struct packet *proto_eth_parse(struct packet_parser *parser, const uint8_t *data
 
 	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_ETH);
 	len -= sizeof(struct eth_hdr);
+	data += sizeof(struct eth_hdr);
 
 	struct packet *pkt;
 	switch (proto) {
 	case ETH_PROTO_ARP:
-		pkt = proto_arp_parse(parser, data + sizeof(struct eth_hdr), len, new_offset);
-		if (!pkt)
-			return NULL;
+		pkt = proto_arp_parse(parser, data, len, new_offset);
+		break;
+	case ETH_PROTO_IP:
+		pkt = proto_ip_parse(parser, data, len, new_offset);
 		break;
 	default:
 		pkt = proto_hdr_none(parser, new_offset);
-		if (!pkt)
-			return NULL;
 		break;
 	}
+
+	if (!pkt)
+		return NULL;
 
 	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
 	hdr->type = HDR_ETH;
@@ -109,6 +112,55 @@ struct packet *proto_arp_parse(struct packet_parser *parser, const uint8_t *data
 
 	arp_info->proto_addr_target = arp_info_ptr;
 	memcpy(arp_info_ptr, arph_ptr, arp_info->proto_addr_len);
+
+	return pkt;
+
+unknown_header:
+	/* no recognized header in the packet;
+	 * return a packet with a "no header" */
+	return proto_hdr_none(parser, offset);
+}
+
+/* IPv4 support */
+struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset)
+{
+	if (len < sizeof(struct ip_hdr))
+		goto unknown_header;
+
+	struct ip_hdr *iph = (struct ip_hdr *)data;
+	size_t aux_size = iph->ihl * 4;
+	aux_size = aux_size > sizeof(struct ip_hdr) ? aux_size - sizeof(struct ip_hdr) : 0;
+
+	if (iph->version != 4)
+		goto unknown_header;
+
+	/* TODO: add support for L4 headers */
+	struct packet *pkt = proto_hdr_none(parser, offset + pktlib_pkt_hdr_size(HDR_IP) + aux_size);
+	if (!pkt)
+		return NULL;
+
+	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
+	hdr->type = HDR_IP;
+	struct header_ip *ip_info = (struct header_ip *)hdr->header_info;
+	memset(ip_info, 0, sizeof(*ip_info));
+	ip_info->version = iph->version;
+	ip_info->header_len = iph->ihl * 4;
+	ip_info->dscp = iph->dscp;
+	ip_info->ecn = iph->ecn;
+	ip_info->tos = iph->tos;
+	ip_info->total_len = ntohs(iph->tot_len);
+	ip_info->id = ntohs(iph->id);
+	uint16_t frag_off = ntohs(iph->frag_off);
+	ip_info->frag_offset = frag_off & ((1 << 13) - 1);
+	ip_info->flags = frag_off >> 13;
+	ip_info->ttl = iph->ttl;
+	ip_info->proto = iph->proto;
+	ip_info->checksum = ntohs(iph->check);
+	/* TODO: validate checksum */
+	ip_info->source = iph->source;
+	ip_info->dest = iph->dest;
+	/* TODO: IP options */
 
 	return pkt;
 

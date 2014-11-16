@@ -7,6 +7,7 @@
 
 /* Eth proto types */
 #define ETH_PROTO_ARP	0x0806
+#define ETH_PROTO_IP	0x0800
 
 struct eth_hdr {
 	uint8_t dest[ETH_ADDR_LEN];
@@ -29,5 +30,40 @@ struct arp_hdr {
 };
 
 struct packet *proto_arp_parse(struct packet_parser *parser, const uint8_t *data, size_t len, size_t offset);
+
+/* IPv4 support */
+struct ip_hdr {
+#if defined(__BIG_ENDIAN)
+	uint8_t ihl:4;
+	uint8_t version:4;
+#elif defined (__LITTLE_ENDIAN)
+	uint8_t version:4;
+	uint8_t ihl:4;
+#else
+#error "Please define byteorder"
+#endif
+	union {
+		uint8_t	tos;
+#if defined(__BIG_ENDIAN)
+		uint8_t ecn:2;
+		uint8_t dscp:6;
+#elif defined (__LITTLE_ENDIAN)
+		uint8_t dscp:6;
+		uint8_t ecn:2;
+#endif
+	};
+
+	uint16_t tot_len;
+	uint16_t id;
+	uint16_t frag_off;
+	uint8_t ttl;
+	uint8_t proto;
+	uint16_t check;
+	uint32_t source;
+	uint32_t dest;
+};
+
+struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset);
 
 void proto_init(void);

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -std=c99 -Wall -Werror 
+CFLAGS = -D__LITTLE_ENDIAN -g -std=c99 -Wall -Werror 
 TARGET = libpkt.a
 SRCS = pktlib.c protocol.c
 
