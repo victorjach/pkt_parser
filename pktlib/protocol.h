@@ -44,13 +44,15 @@ struct ip_hdr {
 #endif
 	union {
 		uint8_t	tos;
+		struct {
 #if defined(__BIG_ENDIAN)
-		uint8_t ecn:2;
-		uint8_t dscp:6;
+			uint8_t ecn:2;
+			uint8_t dscp:6;
 #elif defined (__LITTLE_ENDIAN)
-		uint8_t dscp:6;
-		uint8_t ecn:2;
+			uint8_t dscp:6;
+			uint8_t ecn:2;
 #endif
+		};
 	};
 
 	uint16_t tot_len;
