@@ -68,6 +68,7 @@ struct ip_hdr {
 #define IP_PROTOCOL_ICMP 0x01
 #define IP_PROTOCOL_IPIP 0x04
 #define IP_PROTOCOL_UDP 0x11
+#define IP_PROTOCOL_TCP 0x06
 
 struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
@@ -117,6 +118,53 @@ struct udp_hdr {
 } __attribute__((packed));
 
 struct packet *proto_udp_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset);
+
+/* TCP support */
+struct tcp_hdr {
+	uint16_t source_port;
+	uint16_t dest_port;
+	uint32_t seqno;
+	uint32_t ackno;
+
+#if defined(__BIG_ENDIAN)
+	uint16_t ns:1;
+	uint16_t reserved:3;
+	uint16_t data_offset:4;
+
+#elif defined (__LITTLE_ENDIAN)
+	uint16_t data_offset:4;
+	uint16_t reserved:3;
+	uint16_t ns:1;
+#endif
+
+#if defined(__BIG_ENDIAN)
+	uint16_t fin:1;
+	uint16_t syn:1;
+	uint16_t rst:1;
+	uint16_t psh:1;
+	uint16_t ack:1;
+	uint16_t urg:1;
+	uint16_t ece:1;
+	uint16_t cwr:1;
+#elif defined (__LITTLE_ENDIAN)
+	uint16_t cwr:1;
+	uint16_t ece:1;
+	uint16_t urg:1;
+	uint16_t ack:1;
+	uint16_t psh:1;
+	uint16_t rst:1;
+	uint16_t syn:1;
+	uint16_t fin:1;
+#endif
+	uint16_t window_size;
+	uint16_t checksum;
+	uint16_t urg_pointer;
+	uint8_t data[0];
+	/* TODO: support TCP options */
+}__attribute__((packed));
+
+struct packet *proto_tcp_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
 
 void proto_init(void);

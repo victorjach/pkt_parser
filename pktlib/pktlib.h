@@ -2,6 +2,7 @@
 #define __PKTLIB_H__
 #include <stddef.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 enum header_type {
 	HDR_ETH,
@@ -9,6 +10,7 @@ enum header_type {
 	HDR_IP,
 	HDR_ICMP,
 	HDR_UDP,
+	HDR_TCP,
 	HDR_NONE,
 };
 
@@ -83,6 +85,35 @@ struct header_udp {
 	uint16_t checksum;
 };
 
+struct header_tcp {
+	uint16_t source_port;
+	uint16_t dest_port;
+	uint32_t seqno;
+	uint32_t ackno;
+	bool fin;
+	bool syn;
+	bool rst;
+	bool psh;
+	bool ack;
+	bool urg;
+	bool ece;
+	bool cwr;
+	bool ns;
+	uint8_t reserved;
+	union {
+		uint32_t data_offset;
+		uint32_t header_len;
+	};
+
+	uint16_t window_size;
+	uint16_t checksum;
+	uint16_t urg_pointer;
+	/* inferred params */
+	uint32_t segment_len;
+	uint8_t data[0];
+	/* TODO: support TCP options */
+};
+
 struct packet {
 	size_t len;
 	struct header hdr[0];
@@ -114,6 +145,9 @@ static inline size_t pktlib_pkt_hdr_size(enum header_type type)
 		break;
 	case HDR_UDP:
 		size += sizeof(struct header_udp);
+		break;
+	case HDR_TCP:
+		size += sizeof(struct header_tcp);
 		break;
 	case HDR_NONE:
 		break;

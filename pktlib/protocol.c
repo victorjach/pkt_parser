@@ -173,6 +173,9 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	case IP_PROTOCOL_UDP:
 		pkt = proto_udp_parse(parser, new_data, new_len, new_offset);
 		break;
+	case IP_PROTOCOL_TCP:
+		pkt = proto_tcp_parse(parser, new_data, new_len, new_offset);
+		break;
 
 	/* TODO: add support for L4 headers */
 	default:
@@ -276,4 +279,47 @@ unknown_header:
 	return proto_hdr_none(parser, offset);
 }
 
+struct packet *proto_tcp_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset)
+{
+	if (len < sizeof(struct tcp_hdr))
+		goto unknown_header;
+
+	struct tcp_hdr *tcph = (struct tcp_hdr *)data;
+	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_TCP);
+	/* TODO: support application layer protocols */
+	struct packet *pkt = proto_hdr_none(parser, new_offset);
+	if (!pkt)
+		return NULL;
+
+	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
+	hdr->type = HDR_TCP;
+	struct header_tcp *tcp_info = (struct header_tcp *)hdr->header_info;
+	tcp_info->source_port = ntohs(tcph->source_port);
+	tcp_info->dest_port = ntohs(tcph->dest_port);
+	tcp_info->checksum = ntohs(tcph->checksum);
+	tcp_info->fin = tcph->fin;
+	tcp_info->syn = tcph->syn;
+	tcp_info->rst = tcph->rst;
+	tcp_info->psh = tcph->psh;
+	tcp_info->ack = tcph->ack;
+	tcp_info->urg = tcph->urg;
+	tcp_info->ece = tcph->ece;
+	tcp_info->cwr = tcph->cwr;
+	tcp_info->ns = tcph->ns;
+	tcp_info->reserved = tcph->reserved;
+	tcp_info->data_offset = (uint32_t)tcph->data_offset * 4;
+	tcp_info->window_size = ntohs(tcph->window_size);
+	tcp_info->urg_pointer = ntohs(tcph->urg_pointer);
+	tcp_info->segment_len = len;
+	tcp_info->seqno = ntohl(tcph->seqno);
+	tcp_info->ackno = ntohl(tcph->ackno);
+	/* TODO: TCP Options */
+	return pkt;
+
+unknown_header:
+	/* no recognized header in the packet;
+	 * return a packet with a "no header" */
+	return proto_hdr_none(parser, offset);
+}
 
