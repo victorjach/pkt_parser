@@ -61,9 +61,47 @@ struct ip_hdr {
 	uint16_t check;
 	uint32_t source;
 	uint32_t dest;
-};
+} __attribute__((packed));
+
+#define IP_PROTOCOL_ICMP 0x01
 
 struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset);
+
+/* ICMP support */
+struct icmp_hdr {
+	uint8_t type;
+	uint8_t code;
+	uint16_t check;
+	union {
+		uint32_t unused;
+		struct {
+#if defined(__BIG_ENDIAN)
+		uint32_t unused_1:24;
+		uint32_t pointer:8;
+#elif defined (__LITTLE_ENDIAN)
+		uint32_t unused_1:24;
+		uint32_t pointer:8;
+#endif
+		};
+		uint32_t gateway_addr;
+
+		struct {
+			uint16_t id;
+			uint16_t seqno;
+		};
+	};
+
+	uint8_t data[0];
+} __attribute__((packed));
+
+struct icmp_timestamp {
+	uint32_t orig_timestamp;
+	uint32_t recv_timestamp;
+	uint32_t trans_timestap;
+};
+
+struct packet *proto_icmp_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
 
 void proto_init(void);

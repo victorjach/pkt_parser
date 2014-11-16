@@ -157,8 +157,20 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	if (iph->version != 4)
 		goto unknown_header;
 
+	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_IP) + aux_size;
+	size_t new_len = len - aux_size;
+	const uint8_t *new_data = data + sizeof(struct ip_hdr) + aux_size;
+	struct packet *pkt;
+	switch (iph->proto) {
+	case IP_PROTOCOL_ICMP:
+		pkt = proto_icmp_parse(parser, new_data, new_len, new_offset);
+		break;
+
 	/* TODO: add support for L4 headers */
-	struct packet *pkt = proto_hdr_none(parser, offset + pktlib_pkt_hdr_size(HDR_IP) + aux_size);
+	default:
+		pkt = proto_hdr_none(parser, new_offset);
+	}
+
 	if (!pkt)
 		return NULL;
 
@@ -166,7 +178,60 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	hdr->type = HDR_IP;
 	struct header_ip *ip_info = (struct header_ip *)hdr->header_info;
 	copy_ip_info(ip_info, iph);
+	return pkt;
 
+unknown_header:
+	/* no recognized header in the packet;
+	 * return a packet with a "no header" */
+	return proto_hdr_none(parser, offset);
+}
+
+/* ICMP */
+struct packet *proto_icmp_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset)
+{
+	if (len < sizeof(struct icmp_hdr))
+		goto unknown_header;
+
+	struct icmp_hdr *icmph = (struct icmp_hdr *)data;
+	struct packet *pkt = proto_hdr_none(parser, offset + pktlib_pkt_hdr_size(HDR_ICMP));
+	if (!pkt)
+		return NULL;
+
+	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
+	hdr->type = HDR_ICMP;
+
+	struct header_icmp *icmp_info = (struct header_icmp *)hdr->header_info;
+	memset(icmp_info, 0, sizeof(*icmp_info));
+
+	icmp_info->code = icmph->code;
+	icmp_info->type = icmph->type;
+	icmp_info->checksum = icmph->check;
+	switch (icmph->type) {
+	case 3:
+	case 11:
+	case 12:
+	case 4:
+	case 5:
+		/*TODO: set "packet incomplete" attribute */
+		if (len < sizeof(struct icmp_hdr) + sizeof(struct ip_hdr) + sizeof(uint64_t))
+			break;
+
+		copy_ip_info(&icmp_info->ip, (struct ip_hdr *)(data + sizeof(struct icmp_hdr)));
+	};
+
+	if (icmph->type == 3 && icmph->code == 0) {
+		icmp_info->pointer = icmph->pointer;
+	} else if (icmph->type == 5) {
+		icmp_info->gateway = ntohl(icmph->gateway_addr);
+	} else if (icmph->type == 0 || icmph->type == 8) {
+		icmp_info->id = htons(icmph->id);
+		icmp_info->seqno = ntohs(icmph->seqno);
+	} else {
+		icmp_info->unused = ntohl(icmph->unused);
+	}
+
+	/* TODO: add reference to data */
 	return pkt;
 
 unknown_header:

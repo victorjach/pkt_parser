@@ -7,6 +7,7 @@ enum header_type {
 	HDR_ETH,
 	HDR_ARP,
 	HDR_IP,
+	HDR_ICMP,
 	HDR_NONE,
 };
 
@@ -56,6 +57,28 @@ struct header_ip
 	uint8_t options[0];
 };
 
+struct header_icmp
+{
+	uint8_t type;
+	uint8_t code;
+	uint16_t checksum;
+	union {
+		uint32_t unused;
+		uint32_t gateway;
+		uint8_t pointer;
+		struct {
+			uint16_t id;
+			uint16_t seqno;
+		};
+	};
+
+	struct header_ip ip;
+       /* TODO: add member for l4 header */
+	union {
+		uint8_t data[0];
+	};
+};
+
 struct packet {
 	size_t len;
 	struct header hdr[0];
@@ -81,6 +104,9 @@ static inline size_t pktlib_pkt_hdr_size(enum header_type type)
 		break;
 	case HDR_IP:
 		size += sizeof(struct header_ip);
+		break;
+	case HDR_ICMP:
+		size += sizeof(struct header_icmp);
 		break;
 	case HDR_NONE:
 		break;
