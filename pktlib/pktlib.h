@@ -6,6 +6,7 @@
 
 enum header_type {
 	HDR_ETH,
+	HDR_VLAN,
 	HDR_ARP,
 	HDR_IP,
 	HDR_ICMP,
@@ -24,6 +25,18 @@ struct header_eth {
 	uint8_t source[6];
 	uint8_t dest[6];
 	uint16_t proto;
+};
+
+struct header_vlan {
+	uint16_t tpid;
+	union {
+		uint16_t tci;
+		struct {
+			uint8_t pcp;
+			uint8_t dei;
+			uint16_t vid;
+		};
+	};
 };
 
 struct header_arp {
@@ -133,6 +146,9 @@ static inline size_t pktlib_pkt_hdr_size(enum header_type type)
 	switch (type) {
 	case HDR_ETH:
 		size += sizeof(struct header_eth);
+		break;
+	case HDR_VLAN:
+		size+= sizeof(struct header_vlan);
 		break;
 	case HDR_ARP:
 		size += sizeof(struct header_arp);

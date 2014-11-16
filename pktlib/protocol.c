@@ -35,6 +35,9 @@ struct packet *proto_eth_parse(struct packet_parser *parser, const uint8_t *data
 
 	struct packet *pkt;
 	switch (proto) {
+	case ETH_PROTO_VLAN:
+		pkt = proto_vlan_parse(parser, data, len, new_offset);
+		break;
 	case ETH_PROTO_ARP:
 		pkt = proto_arp_parse(parser, data, len, new_offset);
 		break;
@@ -56,6 +59,52 @@ struct packet *proto_eth_parse(struct packet_parser *parser, const uint8_t *data
 	memcpy(eth_info->source, ethh->source, ETH_ADDR_LEN);
 	memcpy(eth_info->dest, ethh->dest, ETH_ADDR_LEN);
 	eth_info->proto = proto;
+	return pkt;
+
+unknown_header:
+	/* no recognized header in the packet;
+	 * return a packet with a "no header" */
+	return proto_hdr_none(parser, offset);
+}
+
+struct packet *proto_vlan_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset)
+{
+	if (len < sizeof(struct vlan_hdr))
+		goto unknown_header;
+
+	struct packet *pkt;
+	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_VLAN);
+	size_t new_len = len - sizeof(struct vlan_hdr);
+	struct vlan_hdr *vlanh = (struct vlan_hdr *)data;
+	data += sizeof(struct vlan_hdr);
+	switch (ntohs(vlanh->tpid)) {
+	case ETH_PROTO_VLAN:
+		pkt = proto_vlan_parse(parser, data, new_len, new_offset);
+		break;
+	case ETH_PROTO_IP:
+		pkt = proto_ip_parse(parser, data, new_len, new_offset);
+		break;
+	case ETH_PROTO_ARP:
+		pkt = proto_arp_parse(parser, data, new_len, new_offset);
+		break;
+	default:
+		pkt = proto_hdr_none(parser, new_offset);
+		break;
+	}
+
+	if (!pkt)
+		return NULL;
+
+	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
+	hdr->type = HDR_VLAN;
+
+	struct header_vlan *vlan_info = (struct header_vlan *)hdr->header_info;
+	memset(vlan_info, 0, sizeof(*vlan_info));
+	vlan_info->tpid = ntohs(vlanh->tpid);
+	vlan_info->vid = (uint16_t)vlanh->vid_lo | ((uint16_t)vlanh->vid_hi << 8);
+	vlan_info->dei = vlanh->dei;
+	vlan_info->pcp = vlanh->pcp;
 	return pkt;
 
 unknown_header:

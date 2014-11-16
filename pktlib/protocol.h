@@ -8,6 +8,7 @@
 /* Eth proto types */
 #define ETH_PROTO_ARP	0x0806
 #define ETH_PROTO_IP	0x0800
+#define ETH_PROTO_VLAN	0x8100
 
 struct eth_hdr {
 	uint8_t dest[ETH_ADDR_LEN];
@@ -18,6 +19,31 @@ struct eth_hdr {
 typedef int (*header_parser_func)(const uint8_t *, size_t, struct header *);
 
 struct packet *proto_eth_parse(struct packet_parser *parser, const uint8_t *data, size_t len, size_t offset);
+
+/* VLAN support*/
+struct vlan_hdr {
+	union {
+		uint16_t tci;
+		struct {
+#if defined(__BIG_ENDIAN)
+			uint8_t vid_hi:4;
+			uint8_t dei:1;
+			uint8_t pcp:3;
+			uint8_t vid_lo;
+#elif defined (__LITTLE_ENDIAN)
+			uint8_t vid_lo;
+			uint8_t pcp:3;
+			uint8_t dei:1;
+			uint8_t vid_hi:4;
+#endif
+		};
+	};
+
+	uint16_t tpid;
+};
+
+struct packet *proto_vlan_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset);
 
 /* ARP support */
 struct arp_hdr {
