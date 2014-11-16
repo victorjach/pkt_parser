@@ -19,8 +19,8 @@ struct header {
 /* user level headers */
 struct header_eth
 {
-	uint8_t source[14];
-	uint8_t dest[14];
+	uint8_t source[6];
+	uint8_t dest[6];
 	uint16_t proto;
 };
 
