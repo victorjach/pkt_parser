@@ -67,6 +67,7 @@ struct ip_hdr {
 
 #define IP_PROTOCOL_ICMP 0x01
 #define IP_PROTOCOL_IPIP 0x04
+#define IP_PROTOCOL_UDP 0x11
 
 struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
@@ -105,6 +106,17 @@ struct icmp_timestamp {
 };
 
 struct packet *proto_icmp_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset);
+
+/* UDP support */
+struct udp_hdr {
+	uint16_t source_port;
+	uint16_t dest_port;
+	uint16_t length;
+	uint16_t checksum;
+} __attribute__((packed));
+
+struct packet *proto_udp_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
 
 void proto_init(void);

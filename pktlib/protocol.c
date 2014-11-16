@@ -169,6 +169,9 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	case IP_PROTOCOL_IPIP:
 		pkt = proto_ip_parse(parser, new_data, new_len, new_offset);
 		break;
+	case IP_PROTOCOL_UDP:
+		pkt = proto_udp_parse(parser, new_data, new_len, new_offset);
+		break;
 
 	/* TODO: add support for L4 headers */
 	default:
@@ -236,6 +239,34 @@ struct packet *proto_icmp_parse(struct packet_parser *parser, const uint8_t *dat
 	}
 
 	/* TODO: add reference to data */
+	return pkt;
+
+unknown_header:
+	/* no recognized header in the packet;
+	 * return a packet with a "no header" */
+	return proto_hdr_none(parser, offset);
+}
+
+struct packet *proto_udp_parse(struct packet_parser *parser, const uint8_t *data,
+			      size_t len, size_t offset)
+{
+	if (len < sizeof(struct udp_hdr))
+		goto unknown_header;
+
+	struct udp_hdr *udph = (struct udp_hdr *)data;
+	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_UDP);
+	/* TODO: support application layer protocols */
+	struct packet *pkt = proto_hdr_none(parser, new_offset);
+	if (!pkt)
+		return NULL;
+
+	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
+	hdr->type = HDR_UDP;
+	struct header_udp *udp_info = (struct header_udp *)hdr->header_info;
+	udp_info->source_port = ntohs(udph->source_port);
+	udp_info->dest_port = ntohs(udph->dest_port);
+	udp_info->length = ntohs(udph->length);
+	udp_info->checksum = ntohs(udph->checksum);
 	return pkt;
 
 unknown_header:

@@ -8,6 +8,7 @@ enum header_type {
 	HDR_ARP,
 	HDR_IP,
 	HDR_ICMP,
+	HDR_UDP,
 	HDR_NONE,
 };
 
@@ -79,6 +80,13 @@ struct header_icmp
 	};
 };
 
+struct header_udp {
+	uint16_t source_port;
+	uint16_t dest_port;
+	uint16_t length;
+	uint16_t checksum;
+};
+
 struct packet {
 	size_t len;
 	struct header hdr[0];
@@ -107,6 +115,9 @@ static inline size_t pktlib_pkt_hdr_size(enum header_type type)
 		break;
 	case HDR_ICMP:
 		size += sizeof(struct header_icmp);
+		break;
+	case HDR_UDP:
+		size += sizeof(struct header_udp);
 		break;
 	case HDR_NONE:
 		break;
