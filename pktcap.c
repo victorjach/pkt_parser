@@ -60,6 +60,46 @@ void print_arp_packet(struct header_arp *arph)
 	/* TODO: print addresses */
 }
 
+void print_ip_packet(struct header_ip *ip)
+{
+	void print_ip_addr(uint32_t addr)
+	{
+		uint8_t *ip = (uint8_t *)&addr;
+		printf("%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+	}
+
+	printf("\t[IPv4]\n");
+	printf("\t\tHeader length: %u\n", ip->header_len);
+	printf("\t\tTOS: DSCP(0x%02X) ECN(0x%02X)\n", ip->dscp, ip->ecn);
+	printf("\t\tTotal length: %u\n", ip->total_len);
+	printf("\t\tIdentification: 0x%04X\n", ip->id);
+	printf("\t\tFlags: 0x%02X\n", ip->flags);
+	printf("\t\tFragment offset: 0x%04X\n", ip->frag_offset);
+	printf("\t\tTTL: %u\n", ip->ttl);
+
+	printf("\t\tProtocol: ");
+	switch(ip->proto) {
+	case 0x06:
+		printf("TCP");
+		break;
+	case 0x11:
+		printf("UDP");
+		break;
+	default:
+		printf("Unknown");
+	}
+
+	printf("(0x%X)\n", ip->proto);
+
+	printf("\t\tSource: ");
+	print_ip_addr(ip->source);
+	printf("\n");
+
+	printf("\t\tDestination: ");
+	print_ip_addr(ip->dest);
+	printf("\n");
+}
+
 void print_packet(struct packet *pkt)
 {
 	printf("[Frame, len=%zu]\n", pkt->len);
@@ -73,6 +113,9 @@ void print_packet(struct packet *pkt)
 			break;
 		case HDR_ARP:
 			print_arp_packet((struct header_arp *)hdr->header_info);
+			break;
+		case HDR_IP:
+			print_ip_packet((struct header_ip *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
