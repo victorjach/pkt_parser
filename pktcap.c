@@ -165,6 +165,39 @@ void print_udp_packet(struct header_udp *udp)
 	printf("\t\tLength: %u\n", udp->length);
 }
 
+void print_tcp_packet(struct header_tcp *tcp)
+{
+	printf("\t[TCP]\n");
+	printf("\t\tSource port: %u\n", tcp->source_port);
+	printf("\t\tDestination port: %u\n", tcp->dest_port);
+	printf("\t\tSequence number: %u\n", tcp->seqno);
+	printf("\t\tAcknoledgment number: %u\n", tcp->ackno);
+
+	printf("\t\tFlags: ");
+	if (tcp->syn)
+		printf("syn ");
+	if (tcp->fin)
+		printf("fin ");
+	if (tcp->rst)
+		printf("rst ");
+	if (tcp->psh)
+		printf("psh ");
+	if (tcp->ack)
+		printf("ack ");
+	if (tcp->urg)
+		printf("urg ");
+	if (tcp->ece)
+		printf("ece ");
+	if (tcp->cwr)
+		printf("cwr ");
+	if (tcp->ns)
+		printf("ns ");
+
+	printf("\n");
+	printf("\t\tHeader length: %u\n", tcp->header_len);
+	printf("\t\tSegment length: %u\n", tcp->segment_len);
+}
+
 void print_packet(struct packet *pkt)
 {
 	printf("[Frame, len=%zu]\n", pkt->len);
@@ -187,6 +220,9 @@ void print_packet(struct packet *pkt)
 			break;
 		case HDR_UDP:
 			print_udp_packet((struct header_udp *)hdr->header_info);
+			break;
+		case HDR_TCP:
+			print_tcp_packet((struct header_tcp *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
