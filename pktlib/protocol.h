@@ -1,3 +1,7 @@
+#if !defined(__BIG_ENDIAN) && !defined (__LITTLE_ENDIAN)
+#error "Please define byteorder (__BIG_ENDIAN || __LITTLE_ENDIAN)"
+#endif
+
 #include <inttypes.h>
 #include "pktlib.h"
 
@@ -65,8 +69,6 @@ struct ip_hdr {
 #elif defined (__LITTLE_ENDIAN)
 	uint8_t version:4;
 	uint8_t ihl:4;
-#else
-#error "Please define byteorder"
 #endif
 	union {
 		uint8_t	tos;
