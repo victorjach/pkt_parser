@@ -151,7 +151,8 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 		goto unknown_header;
 
 	struct ip_hdr *iph = (struct ip_hdr *)data;
-	size_t aux_size = iph->ihl * 4;
+	size_t ip_hdr_len = iph->ihl * 4;
+	size_t aux_size = ip_hdr_len;
 	aux_size = aux_size > sizeof(struct ip_hdr) ? aux_size - sizeof(struct ip_hdr) : 0;
 
 	if (iph->version != 4)
@@ -159,7 +160,7 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 		goto unknown_header;
 
 	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_IP) + aux_size;
-	size_t new_len = len - aux_size;
+	size_t new_len = len - ip_hdr_len;
 	const uint8_t *new_data = data + sizeof(struct ip_hdr) + aux_size;
 	struct packet *pkt;
 	switch (iph->proto) {
