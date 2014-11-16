@@ -122,6 +122,28 @@ unknown_header:
 }
 
 /* IPv4 support */
+static void copy_ip_info(struct header_ip *ip_info, struct ip_hdr *iph)
+{
+	memset(ip_info, 0, sizeof(*ip_info));
+	ip_info->version = iph->version;
+	ip_info->header_len = iph->ihl * 4;
+	ip_info->dscp = iph->dscp;
+	ip_info->ecn = iph->ecn;
+	ip_info->tos = iph->tos;
+	ip_info->total_len = ntohs(iph->tot_len);
+	ip_info->id = ntohs(iph->id);
+	uint16_t frag_off = ntohs(iph->frag_off);
+	ip_info->frag_offset = frag_off & ((1 << 13) - 1);
+	ip_info->flags = frag_off >> 13;
+	ip_info->ttl = iph->ttl;
+	ip_info->proto = iph->proto;
+	ip_info->checksum = ntohs(iph->check);
+	/* TODO: validate checksum */
+	ip_info->source = iph->source;
+	ip_info->dest = iph->dest;
+	/* TODO: IP options */
+}
+
 struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset)
 {
@@ -143,24 +165,7 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	struct header *hdr = pktlib_pkt_get_hdr(pkt, offset);
 	hdr->type = HDR_IP;
 	struct header_ip *ip_info = (struct header_ip *)hdr->header_info;
-	memset(ip_info, 0, sizeof(*ip_info));
-	ip_info->version = iph->version;
-	ip_info->header_len = iph->ihl * 4;
-	ip_info->dscp = iph->dscp;
-	ip_info->ecn = iph->ecn;
-	ip_info->tos = iph->tos;
-	ip_info->total_len = ntohs(iph->tot_len);
-	ip_info->id = ntohs(iph->id);
-	uint16_t frag_off = ntohs(iph->frag_off);
-	ip_info->frag_offset = frag_off & ((1 << 13) - 1);
-	ip_info->flags = frag_off >> 13;
-	ip_info->ttl = iph->ttl;
-	ip_info->proto = iph->proto;
-	ip_info->checksum = ntohs(iph->check);
-	/* TODO: validate checksum */
-	ip_info->source = iph->source;
-	ip_info->dest = iph->dest;
-	/* TODO: IP options */
+	copy_ip_info(ip_info, iph);
 
 	return pkt;
 
