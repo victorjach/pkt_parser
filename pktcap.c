@@ -24,6 +24,12 @@ void print_eth_packet(struct header_eth *ethh)
 	printf("\t\tProtocol: 0x%X\n", ethh->proto);
 }
 
+void print_vlan_packet(struct header_vlan *vlanh)
+{
+	printf("\t[802.1Q]\n");
+	printf("\t\tVLAN: %u\n", vlanh->vid);
+}
+
 void print_arp_packet(struct header_arp *arph)
 {
 	printf("\t[ARP]\n");
@@ -208,6 +214,9 @@ void print_packet(struct packet *pkt)
 		switch (hdr->type) {
 		case HDR_ETH:
 			print_eth_packet((struct header_eth *)hdr->header_info);
+			break;
+		case HDR_VLAN:
+			print_vlan_packet((struct header_vlan *)hdr->header_info);
 			break;
 		case HDR_ARP:
 			print_arp_packet((struct header_arp *)hdr->header_info);
