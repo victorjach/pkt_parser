@@ -85,6 +85,9 @@ void print_ip_packet(struct header_ip *ip)
 	case 0x11:
 		printf("UDP");
 		break;
+	case 0x01:
+		printf("ICMP");
+		break;
 	default:
 		printf("Unknown");
 	}
@@ -98,6 +101,60 @@ void print_ip_packet(struct header_ip *ip)
 	printf("\t\tDestination: ");
 	print_ip_addr(ip->dest);
 	printf("\n");
+}
+
+void print_icmp_packet(struct header_icmp *icmp)
+{
+	printf("\t[ICMP]\n");
+	printf("\t\tType: ");
+	switch (icmp->type) {
+	case 3:
+		printf("Destination unreachable\n");
+
+		break;
+	case 11:
+		printf("Time exceeded\n");
+		break;
+	case 12:
+		printf("Parameter problem\n");
+		break;
+	case 4:
+		printf("Source quench\n");
+		break;
+	case 5:
+		printf("Redirect\n");
+		break;
+	case 0:
+		printf("Echo request\n");
+		printf("\t\tId: %02X\n", icmp->id);
+		printf("\t\tSequence number: 0x%02X\n", icmp->seqno);
+		break;
+	case 8:
+		printf("Echo reply\n");
+		printf("\t\tId: %02X\n", icmp->id);
+		printf("\t\tSequence number: 0x%02X\n", icmp->seqno);
+		break;
+	case 13:
+		printf("Timestamp\n");
+		break;
+	case 14:
+		printf("Timestamp reply\n");
+		break;
+	case 15:
+		printf("Info request\n");
+		break;
+	case 16:
+		printf("Info reply\n");
+		break;
+	default:
+		printf("Unknown(%02X)\n", icmp->type);
+	}
+
+	printf("\t\tCode: %04X\n", icmp->code);
+	/* TODO: print ip header for other type as well */
+	if (icmp->type == 0x03) {
+		print_ip_packet(&icmp->ip);
+	}
 }
 
 void print_packet(struct packet *pkt)
@@ -116,6 +173,9 @@ void print_packet(struct packet *pkt)
 			break;
 		case HDR_IP:
 			print_ip_packet((struct header_ip *)hdr->header_info);
+			break;
+		case HDR_ICMP:
+			print_icmp_packet((struct header_icmp *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
