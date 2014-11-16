@@ -157,6 +157,14 @@ void print_icmp_packet(struct header_icmp *icmp)
 	}
 }
 
+void print_udp_packet(struct header_udp *udp)
+{
+	printf("\t[UDP]\n");
+	printf("\t\tSource port: %u\n", udp->source_port);
+	printf("\t\tDestination port: %u\n", udp->dest_port);
+	printf("\t\tLength: %u\n", udp->length);
+}
+
 void print_packet(struct packet *pkt)
 {
 	printf("[Frame, len=%zu]\n", pkt->len);
@@ -176,6 +184,9 @@ void print_packet(struct packet *pkt)
 			break;
 		case HDR_ICMP:
 			print_icmp_packet((struct header_icmp *)hdr->header_info);
+			break;
+		case HDR_UDP:
+			print_udp_packet((struct header_udp *)hdr->header_info);
 			break;
 		default:
 			printf("\t[Unknown header]\n");
