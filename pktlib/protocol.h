@@ -80,11 +80,11 @@ struct icmp_hdr {
 		uint32_t unused;
 		struct {
 #if defined(__BIG_ENDIAN)
-		uint32_t unused_1:24;
-		uint32_t pointer:8;
+			uint32_t unused_1:24;
+			uint32_t pointer:8;
 #elif defined (__LITTLE_ENDIAN)
-		uint32_t unused_1:24;
-		uint32_t pointer:8;
+			uint32_t unused_1:24;
+			uint32_t pointer:8;
 #endif
 		};
 		uint32_t gateway_addr;
