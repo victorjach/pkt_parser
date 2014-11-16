@@ -66,6 +66,7 @@ struct ip_hdr {
 } __attribute__((packed));
 
 #define IP_PROTOCOL_ICMP 0x01
+#define IP_PROTOCOL_IPIP 0x04
 
 struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);

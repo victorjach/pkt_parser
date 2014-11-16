@@ -155,6 +155,7 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	aux_size = aux_size > sizeof(struct ip_hdr) ? aux_size - sizeof(struct ip_hdr) : 0;
 
 	if (iph->version != 4)
+		/* TODO: ipv6 support ?! */
 		goto unknown_header;
 
 	size_t new_offset = offset + pktlib_pkt_hdr_size(HDR_IP) + aux_size;
@@ -164,6 +165,9 @@ struct packet *proto_ip_parse(struct packet_parser *parser, const uint8_t *data,
 	switch (iph->proto) {
 	case IP_PROTOCOL_ICMP:
 		pkt = proto_icmp_parse(parser, new_data, new_len, new_offset);
+		break;
+	case IP_PROTOCOL_IPIP:
+		pkt = proto_ip_parse(parser, new_data, new_len, new_offset);
 		break;
 
 	/* TODO: add support for L4 headers */
