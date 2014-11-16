@@ -103,7 +103,7 @@ struct icmp_timestamp {
 	uint32_t orig_timestamp;
 	uint32_t recv_timestamp;
 	uint32_t trans_timestap;
-};
+} __attribute__((packed));
 
 struct packet *proto_icmp_parse(struct packet_parser *parser, const uint8_t *data,
 			      size_t len, size_t offset);
