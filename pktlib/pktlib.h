@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 enum header_type {
+	HDR_NONE,
 	HDR_ETH,
 	HDR_VLAN,
 	HDR_ARP,
@@ -12,7 +13,6 @@ enum header_type {
 	HDR_ICMP,
 	HDR_UDP,
 	HDR_TCP,
-	HDR_NONE,
 };
 
 struct header {
