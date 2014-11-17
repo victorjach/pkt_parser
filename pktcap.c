@@ -259,6 +259,7 @@ int pktcap_process(struct packet_parser *parser, int sockfd)
 	}
 
 	print_packet(pkt);
+	free(pkt);
 	return 0;
 }
 
